@@ -1,0 +1,9 @@
+{
+  "name": "Time to Guess",
+  "short_name": "TTG",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#120E2E",
+  "theme_color": "#6C5CE7",
+  "orientation": "portrait"
+}
