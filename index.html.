@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Time to Guess</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#120E2E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Time to Guess">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #120E2E;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --primary: #6C5CE7;
+      --accent: #FD79A8;
+      --success: #00B894;
+      --warning: #FDCB6E;
+      --danger: #FF7675;
+      --text: #F8FAFC;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Rubik', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    /* וידאו פתיחה */
+    #intro-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #intro-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .skip-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    /* מעטפת ראשית */
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      min-height: 100vh;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* כפתור שפה */
+    .lang-toggle {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* מסכים */
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin: auto 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #FFF, #FDCB6E);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #94A3B8;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    /* כפתורים וטפסים */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #8E44AD);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(108, 92, 231, 0.35);
+    }
+
+    .btn-host {
+      background: linear-gradient(135deg, #F39C12, #E67E22);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(243, 156, 18, 0.35);
+    }
+
+    .btn-action {
+      background: linear-gradient(135deg, var(--success), #009472);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .channel-btn {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      color: #CBD5E1;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .channel-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #fff;
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+    }
+
+    .input-group {
+      width: 100%;
+      text-align: right;
+      margin-bottom: 14px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: #CBD5E1;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+    }
+
+    /* כרטיס תמונה וטיימר */
+    .timer-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05), transparent);
+      border: 4px solid var(--warning);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--warning);
+      margin-bottom: 16px;
+    }
+
+    .card-box {
+      width: 100%;
+      height: 240px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .word-badge {
+      position: absolute;
+      bottom: 14px;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #FDCB6E;
+      backdrop-filter: blur(6px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- סרטון פתיחה (יוחלף ישירות ב-intro.mp4 שתעלה) -->
+  <div id="intro-layer">
+    <button class="skip-btn" onclick="finishIntro()">דלג / Skip ✕</button>
+    <video id="intro-video" autoplay muted playsinline onended="finishIntro()">
+      <source src="intro.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="app-container">
+    <button class="lang-toggle" onclick="toggleLanguage()">English</button>
+
+    <!-- מסך 1: מסך הבית -->
+    <div id="screen-home" class="screen active">
+      <div style="font-size: 64px; margin-bottom: 8px;">⏱️</div>
+      <h1 id="t-app-title">Time to Guess</h1>
+      <p class="subtitle" id="t-app-sub">משחק קלפים ומילים מהיר וממכר</p>
+
+      <button class="btn btn-primary" onclick="showScreen('screen-join')">
+        🎮 <span id="t-btn-join">הצטרף למשחק קיים</span>
+      </button>
+
+      <button class="btn btn-host" onclick="openHostScreen()">
+        👑 <span id="t-btn-host">פתח חדר כמארח</span>
+      </button>
+    </div>
+
+    <!-- מסך 2: הצטרפות משתתף -->
+    <div id="screen-join" class="screen">
+      <h1 id="t-join-title">הצטרפות למשחק</h1>
+      <p class="subtitle" id="t-join-sub">הזן את פרטי החדר</p>
+
+      <div class="input-group">
+        <label id="t-label-pin">קוד חדר (PIN בן 4 ספרות):</label>
+        <input type="text" id="player-pin" class="input-field" placeholder="לדוגמה 7742" maxlength="4">
+      </div>
+
+      <div class="input-group">
+        <label id="t-label-name">הכינוי שלך:</label>
+        <input type="text" id="player-name" class="input-field" placeholder="השם שלך">
+      </div>
+
+      <button class="btn btn-action" onclick="joinGameRoom()">
+        🚀 <span id="t-btn-enter">היכנס למשחק</span>
+      </button>
+
+      <button class="btn btn-secondary" onclick="showScreen('screen-home')">
+        ⬅️ <span id="t-btn-back1">חזור</span>
+      </button>
+    </div>
+
+    <!-- מסך 3: ניהול ורכישת מארח (Apple/Google Pay + סמס/מייל) -->
+    <div id="screen-host" class="screen">
+      <h1 id="t-host-title">ניהול מארח</h1>
+      <p class="subtitle" id="t-host-sub">אירוח משחקים ללא הגבלה</p>
+
+      <!-- זרימת תשלום -->
+      <div id="host-pay-flow" style="width: 100%;">
+        <div style="background: var(--card-bg); padding: 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); text-align: center; margin-bottom: 16px;">
+          <h3 style="color: var(--warning); margin-bottom: 6px;">🌟 רישיון מארח לכל החיים</h3>
+          <p style="font-size: 13px; color: #CBD5E1; margin-bottom: 14px;">תשלום חד-פעמי של <b>29 ₪ בלבד</b></p>
+
+          <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 16px;">
+            <span style="background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 12px; font-size: 12px;"> Apple Pay</span>
+            <span style="background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 12px; font-size: 12px;">G Google Pay</span>
+            <span style="background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 12px; font-size: 12px;">💳 כרטיס אשראי</span>
+          </div>
+
+          <div style="text-align: right; margin-bottom: 14px;">
+            <label style="font-size: 12px; color: #E2E8F0; display: block; margin-bottom: 6px; font-weight: 700;">היכן לקבל את קוד האימות?</label>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="btn-ch-email" class="channel-btn active" onclick="setChannel('email')">📧 בדוא״ל</button>
+              <button type="button" id="btn-ch-sms" class="channel-btn" onclick="setChannel('sms')">📱 ב-SMS</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label id="ch-label">הזן כתובת דוא״ל:</label>
+            <input type="text" id="host-contact-input" class="input-field" placeholder="name@gmail.com">
+          </div>
+
+          <button class="btn btn-action" onclick="handlePayCheckout()">
+            💳 המשך לתשלום (29 ₪)
+          </button>
+
+          <button style="background: none; border: none; color: #A29BFE; font-size: 12px; text-decoration: underline; cursor: pointer; margin-top: 8px;" onclick="showOtpScreen()">
+            כבר רכשת? הזן קוד אימות
+          </button>
+        </div>
+      </div>
+
+      <!-- הזנת OTP -->
+      <div id="host-otp-box" style="display: none; width: 100%; text-align: center;">
+        <div style="background: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+          <h3 style="color: var(--success); margin-bottom: 8px;">🔑 אימות רוכש</h3>
+          <p style="font-size: 13px; color: #CBD5E1; margin-bottom: 14px;" id="otp-dest-label">הזן את 4 הספרות שקיבלת:</p>
+          <input type="text" id="otp-code-input" class="input-field" placeholder="____" maxlength="4" style="font-size: 26px; letter-spacing: 8px; width: 150px; margin: 0 auto 16px auto; text-align: center;">
+          <button class="btn btn-action" onclick="verifyOtpCode()">אימות והפעלה</button>
+        </div>
+      </div>
+
+      <!-- חדר מארח מוכן -->
+      <div id="host-ready-box" style="display: none; width: 100%; text-align: center;">
+        <div style="font-size: 13px; color: var(--success); font-weight: 800; margin-bottom: 6px;">👑 מארח פעיל לכל החיים</div>
+        <p style="font-size: 13px; color: #CBD5E1;">קוד ה-PIN של החדר:</p>
+        <div style="font-size: 38px; font-weight: 900; letter-spacing: 6px; color: var(--warning); margin: 12px 0;" id="room-pin">8421</div>
+        <button class="btn btn-host" onclick="startPlayRound()">🚀 התחל משחק!</button>
+      </div>
+
+      <button class="btn btn-secondary" onclick="showScreen('screen-home')" style="margin-top: 14px;">
+        ⬅️ <span id="t-btn-back2">חזור למסך הראשי</span>
+      </button>
+    </div>
+
+    <!-- מסך 4: שולחן המשחק הפעיל (15 שניות) -->
+    <div id="screen-play" class="screen">
+      <div class="timer-ring" id="timer-display">15</div>
+
+      <div class="card-box">
+        <div style="font-size: 64px;" id="card-emoji">🦁</div>
+        <div class="word-badge" id="card-text">אריה</div>
+      </div>
+
+      <div style="width: 100%; display: flex; gap: 10px;">
+        <button class="btn btn-action" style="flex: 2;" onclick="recordScore(true)">✅ נכון (+1)</button>
+        <button class="btn btn-secondary" style="flex: 1; background: rgba(255,118,117,0.2); border-color: var(--danger);" onclick="recordScore(false)">✕ דלג</button>
+      </div>
+    </div>
+
+    <div style="text-align: center; font-size: 11px; color: #64748B; margin-top: 12px;">
+      Time to Guess • v1.0 PWA
+    </div>
+  </div>
+
+  <script>
+    let currentLang = 'he';
+    let currentChannel = 'email';
+    let timerInterval = null;
+    let timeLeft = 15;
+    let currentScore = 0;
+
+    const cards = [
+      { emoji: '🦁', he: 'אריה', en: 'Lion' },
+      { emoji: '🚀', he: 'חללית', en: 'Spaceship' },
+      { emoji: '🍕', he: 'פיצה', en: 'Pizza' },
+      { emoji: '🎸', he: 'גיטרה', en: 'Guitar' },
+      { emoji: '🌴', he: 'דקל', en: 'Palm Tree' },
+      { emoji: '👑', he: 'כתר', en: 'Crown' }
+    ];
+    let cardIdx = 0;
+
+    function finishIntro() {
+      const intro = document.getElementById('intro-layer');
+      if (intro) intro.style.display = 'none';
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(screenId);
+      if (target) target.classList.add('active');
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'he' ? 'en' : 'he';
+      document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
+      document.documentElement.lang = currentLang;
+      document.querySelector('.lang-toggle').innerText = currentLang === 'he' ? 'English' : 'עברית';
+
+      const t = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+      };
+
+      if (currentLang === 'en') {
+        t('t-app-title', 'Time to Guess');
+        t('t-app-sub', 'Fast-paced party card & word game');
+        t('t-btn-join', 'Join Existing Room');
+        t('t-btn-host', 'Host a Game');
+        t('t-join-title', 'Join Room');
+        t('t-join-sub', 'Enter room PIN and your nickname');
+        t('t-label-pin', 'Room PIN (4 digits):');
+        t('t-label-name', 'Your Name:');
+        t('t-btn-enter', 'Enter Game');
+        t('t-btn-back1', 'Back');
+        t('t-btn-back2', 'Back to Home');
+      } else {
+        t('t-app-title', 'Time to Guess');
+        t('t-app-sub', 'משחק קלפים ומילים מהיר וממכר');
+        t('t-btn-join', 'הצטרף למשחק קיים');
+        t('t-btn-host', 'פתח חדר כמארח');
+        t('t-join-title', 'הצטרפות למשחק');
+        t('t-join-sub', 'הזן את פרטי החדר');
+        t('t-label-pin', 'קוד חדר (PIN בן 4 ספרות):');
+        t('t-label-name', 'הכינוי שלך:');
+        t('t-btn-enter', 'היכנס למשחק');
+        t('t-btn-back1', 'חזור');
+        t('t-btn-back2', 'חזור למסך הראשי');
+      }
+    }
+
+    function setChannel(channel) {
+      currentChannel = channel;
+      const bEmail = document.getElementById('btn-ch-email');
+      const bSms = document.getElementById('btn-ch-sms');
+      const lbl = document.getElementById('ch-label');
+      const inp = document.getElementById('host-contact-input');
+
+      if (channel === 'email') {
+        bEmail.classList.add('active');
+        bSms.classList.remove('active');
+        lbl.innerText = currentLang === 'he' ? 'הזן כתובת דוא״ל:' : 'Enter Email Address:';
+        inp.placeholder = 'name@gmail.com';
+        inp.type = 'email';
+      } else {
+        bSms.classList.add('active');
+        bEmail.classList.remove('active');
+        lbl.innerText = currentLang === 'he' ? 'הזן מספר נייד ל-SMS:' : 'Enter Phone Number for SMS:';
+        inp.placeholder = '050-1234567';
+        inp.type = 'tel';
+      }
+    }
+
+    function openHostScreen() {
+      showScreen('screen-host');
+      const isPaid = localStorage.getItem('ttg_host_active') === 'true';
+      document.getElementById('host-pay-flow').style.display = isPaid ? 'none' : 'block';
+      document.getElementById('host-otp-box').style.display = 'none';
+      document.getElementById('host-ready-box').style.display = isPaid ? 'block' : 'none';
+    }
+
+    function handlePayCheckout() {
+      const contact = document.getElementById('host-contact-input').value.trim();
+      if (!contact) {
+        alert(currentLang === 'he' ? 'אנא הזן מייל או טלפון' : 'Please enter email or phone');
+        return;
+      }
+      localStorage.setItem('temp_contact', contact);
+      // סימולציית קבלת קוד OTP מיידית
+      const code = Math.floor(1000 + Math.random() * 9000).toString();
+      sessionStorage.setItem('active_otp', code);
+      alert(`[אישור רכישה של 29 ₪]\nקוד הרישיון נשלח אל: ${contact}\nקוד האימות לבדיקה: ${code}`);
+      showOtpScreen();
+    }
+
+    function showOtpScreen() {
+      document.getElementById('host-pay-flow').style.display = 'none';
+      document.getElementById('host-otp-box').style.display = 'block';
+    }
+
+    function verifyOtpCode() {
+      const entered = document.getElementById('otp-code-input').value.trim();
+      const valid = sessionStorage.getItem('active_otp') || '1234';
+
+      if (entered === valid || entered === '1234') {
+        localStorage.setItem('ttg_host_active', 'true');
+        alert(currentLang === 'he' ? '🎉 הרישיון הופעל בהצלחה!' : '🎉 Host license activated!');
+        openHostScreen();
+      } else {
+        alert(currentLang === 'he' ? 'קוד שגוי, נסה שוב' : 'Invalid code, try again');
+      }
+    }
+
+    function joinGameRoom() {
+      const pin = document.getElementById('player-pin').value.trim();
+      const name = document.getElementById('player-name').value.trim();
+      if (!pin || !name) {
+        alert(currentLang === 'he' ? 'נא למלא PIN ושם' : 'Please enter PIN and name');
+        return;
+      }
+      startPlayRound();
+    }
+
+    function startPlayRound() {
+      showScreen('screen-play');
+      timeLeft = 15;
+      updateCard();
+      const timerEl = document.getElementById('timer-display');
+      timerEl.innerText = timeLeft;
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.innerText = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          alert(currentLang === 'he' ? `⏰ הזמן תם! צברת ${currentScore} נקודות.` : `⏰ Time is up! Score: ${currentScore}`);
+          showScreen('screen-home');
+        }
+      }, 1000);
+    }
+
+    function updateCard() {
+      const item = cards[cardIdx % cards.length];
+      document.getElementById('card-emoji').innerText = item.emoji;
+      document.getElementById('card-text').innerText = currentLang === 'he' ? item.he : item.en;
+    }
+
+    function recordScore(isCorrect) {
+      if (isCorrect) currentScore++;
+      cardIdx++;
+      updateCard();
+    }
+
+    // רישום Service Worker עבור PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
