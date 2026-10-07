@@ -1,6 +1,7 @@
 # Static site: index.html loads React, Babel and Tailwind from CDNs, so there is
-# nothing to install or compile. These settings override the UI build settings
-# (`bun run build` / `dist`), which fail because the repo has no package.json.
+# nothing to install or compile. The build step just copies the static files
+# into `dist`, which matches the publish directory set in the Netlify UI and
+# avoids publishing the repo root (which Netlify can ignore in favor of the UI value).
 [build]
-  command = "echo 'Static site - no build step required'"
-  publish = "."
+  command = "rm -rf dist && mkdir -p dist && cp index.html manifest.json dist/"
+  publish = "dist"
